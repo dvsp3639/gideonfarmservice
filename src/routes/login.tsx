@@ -105,9 +105,6 @@ function LoginPage() {
           </form>
         </div>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Gideon Farm Services
-        </p>
       </div>
     </div>
   );
