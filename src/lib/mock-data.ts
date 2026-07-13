@@ -61,7 +61,7 @@ export const mockEntries: Entry[] = Array.from({ length: 60 }).map((_, i) => {
     amount: [200, 300, 500, 250, 400, 600, 350][i % 7],
     photoUrl: photo(String(i)),
     workerUsername: mockWorkers[i % 2].username,
-    createdAt: daysAgo(day, 8 + (i % 10)),
+    createdAt: daysAgo(day, 8 + (i % 10), (i * 7) % 60),
   };
 });
 
