@@ -201,6 +201,49 @@ function DashboardPage() {
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-primary" />
+            Daily sales breakdown
+          </CardTitle>
+          <CardDescription>Sales, entries and coupons for each of the last 7 days</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Day</TableHead>
+                <TableHead className="text-right">Entries</TableHead>
+                <TableHead className="text-right">Sales</TableHead>
+                <TableHead className="text-right">Coupons</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {week.map((d) => (
+                <TableRow key={d.date}>
+                  <TableCell className="font-mono text-xs">{d.date}</TableCell>
+                  <TableCell className="font-medium">{d.label}</TableCell>
+                  <TableCell className="text-right">{d.entries}</TableCell>
+                  <TableCell className="text-right font-medium">₹{d.amount.toLocaleString("en-IN")}</TableCell>
+                  <TableCell className="text-right">
+                    <Badge variant={d.coupons > 0 ? "default" : "secondary"}>{d.coupons}</Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {week.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                    No sales data available for the last 7 days.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
             <Truck className="h-4 w-4 text-primary" />
             Recent entries
           </CardTitle>
