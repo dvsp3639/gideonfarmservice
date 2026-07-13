@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, KeyRound } from "lucide-react";
 import { mockWorkers, type Worker } from "@/lib/mock-data";
+import { fmtDate } from "@/lib/format";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/workers")({
@@ -134,7 +135,7 @@ function WorkersPage() {
                     </button>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {new Date(w.createdAt).toLocaleDateString("en-IN")}
+                    {fmtDate(w.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">

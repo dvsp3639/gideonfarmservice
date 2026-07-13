@@ -36,6 +36,7 @@ import {
   Truck,
 } from "lucide-react";
 import { mockEntries, computeCoupons, last7Days } from "@/lib/mock-data";
+import { fmtDateTime } from "@/lib/format";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: DashboardPage,
@@ -239,7 +240,7 @@ function DashboardPage() {
                   </TableCell>
                   <TableCell className="text-muted-foreground">{e.workerUsername}</TableCell>
                   <TableCell className="text-muted-foreground text-xs">
-                    {new Date(e.createdAt).toLocaleString("en-IN")}
+                    {fmtDateTime(e.createdAt)}
                   </TableCell>
                 </TableRow>
               ))}

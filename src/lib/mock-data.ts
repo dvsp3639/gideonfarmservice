@@ -20,11 +20,13 @@ export type Entry = {
   createdAt: string; // ISO
 };
 
+// Deterministic "now" so SSR and client render the same strings.
 const now = new Date();
-function daysAgo(d: number, h = 10) {
+now.setHours(12, 0, 0, 0);
+function daysAgo(d: number, h = 10, m = 0) {
   const x = new Date(now);
   x.setDate(x.getDate() - d);
-  x.setHours(h, Math.floor(Math.random() * 60), 0, 0);
+  x.setHours(h, m, 0, 0);
   return x.toISOString();
 }
 
@@ -59,7 +61,7 @@ export const mockEntries: Entry[] = Array.from({ length: 60 }).map((_, i) => {
     amount: [200, 300, 500, 250, 400, 600, 350][i % 7],
     photoUrl: photo(String(i)),
     workerUsername: mockWorkers[i % 2].username,
-    createdAt: daysAgo(day, 8 + (i % 10)),
+    createdAt: daysAgo(day, 8 + (i % 10), (i * 7) % 60),
   };
 });
 
@@ -121,7 +123,7 @@ export function last7Days(entries: Entry[]) {
     const grouped = groupByDayVehicle(dayEntries).filter((g) => g.total >= 500);
     days.push({
       date: iso,
-      label: d.toLocaleDateString("en-IN", { weekday: "short" }),
+      label: new Date(iso + "T00:00:00Z").toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short" }),
       entries: dayEntries.length,
       amount: dayEntries.reduce((s, e) => s + e.amount, 0),
       coupons: grouped.length,
