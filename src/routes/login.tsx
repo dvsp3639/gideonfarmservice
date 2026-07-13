@@ -1,54 +1,45 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Fuel, Lock, Copy, KeyRound } from "lucide-react";
+import { Fuel, Lock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ADMIN_EMAIL, hasAnyAdmin, provisionAdmin } from "@/lib/auth.functions";
+import { ensureAdminCredentials } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/login")({
   ssr: false,
   component: LoginPage,
 });
 
+function toEmail(username: string) {
+  const safe = username.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "");
+  return `${safe}@workers.gideon.local`;
+}
+
 function LoginPage() {
   const navigate = useNavigate();
-  const [needsBootstrap, setNeedsBootstrap] = useState(false);
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [generated, setGenerated] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard" });
     });
-    hasAnyAdmin()
-      .then((r) => setNeedsBootstrap(!r.exists))
-      .catch(() => {});
+    // Seed / reset the built-in admin credentials on first render
+    ensureAdminCredentials().catch(() => {});
   }, [navigate]);
-
-  async function onGenerate() {
-    setLoading(true);
-    try {
-      const { password: pw } = await provisionAdmin();
-      setGenerated(pw);
-      setPassword(pw);
-      setNeedsBootstrap(false);
-      toast.success("Admin created — save this password now");
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to create admin");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email: ADMIN_EMAIL, password });
+      const { error } = await supabase.auth.signInWithPassword({
+        email: toEmail(username),
+        password,
+      });
       if (error) throw error;
       toast.success("Welcome back");
       navigate({ to: "/dashboard" });
@@ -71,61 +62,47 @@ function LoginPage() {
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-8 shadow-card">
-          <h2 className="text-lg font-semibold">Admin sign in</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {needsBootstrap
-              ? "No admin exists yet. Generate a one-time admin password to get started."
-              : "Enter the admin password to continue."}
-          </p>
+          <h2 className="text-lg font-semibold">Sign in</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Enter your username and password.</p>
 
-          {needsBootstrap ? (
-            <Button onClick={onGenerate} disabled={loading} className="mt-6 w-full font-semibold">
-              <KeyRound className="mr-2 h-4 w-4" />
-              {loading ? "Generating…" : "Generate admin password"}
-            </Button>
-          ) : (
-            <form onSubmit={onSubmit} className="mt-6 space-y-4">
-              {generated && (
-                <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
-                  <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">
-                    Save this password — it won't be shown again
-                  </p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <code className="flex-1 break-all rounded bg-background px-2 py-1 text-sm">{generated}</code>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="outline"
-                      onClick={() => {
-                        navigator.clipboard.writeText(generated);
-                        toast.success("Copied");
-                      }}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    className="pl-9"
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
+          <form onSubmit={onSubmit} className="mt-6 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <div className="relative">
+                <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="username"
+                  className="pl-9"
+                  autoComplete="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="admin"
+                  maxLength={40}
+                  required
+                />
               </div>
-              <Button type="submit" disabled={loading} className="w-full font-semibold">
-                {loading ? "Please wait…" : "Sign in"}
-              </Button>
-            </form>
-          )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  className="pl-9"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  minLength={6}
+                  maxLength={72}
+                  required
+                />
+              </div>
+            </div>
+            <Button type="submit" disabled={loading} className="w-full font-semibold">
+              {loading ? "Please wait…" : "Sign in"}
+            </Button>
+          </form>
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
