@@ -9,38 +9,137 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppWorkersRouteImport } from './routes/_app.workers'
+import { Route as AppEntriesRouteImport } from './routes/_app.entries'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppCouponsRouteImport } from './routes/_app.coupons'
+import { Route as AppApiDocsRouteImport } from './routes/_app.api-docs'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppWorkersRoute = AppWorkersRouteImport.update({
+  id: '/workers',
+  path: '/workers',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEntriesRoute = AppEntriesRouteImport.update({
+  id: '/entries',
+  path: '/entries',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCouponsRoute = AppCouponsRouteImport.update({
+  id: '/coupons',
+  path: '/coupons',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppApiDocsRoute = AppApiDocsRouteImport.update({
+  id: '/api-docs',
+  path: '/api-docs',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/api-docs': typeof AppApiDocsRoute
+  '/coupons': typeof AppCouponsRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/entries': typeof AppEntriesRoute
+  '/workers': typeof AppWorkersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/api-docs': typeof AppApiDocsRoute
+  '/coupons': typeof AppCouponsRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/entries': typeof AppEntriesRoute
+  '/workers': typeof AppWorkersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_app/api-docs': typeof AppApiDocsRoute
+  '/_app/coupons': typeof AppCouponsRoute
+  '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/entries': typeof AppEntriesRoute
+  '/_app/workers': typeof AppWorkersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/api-docs'
+    | '/coupons'
+    | '/dashboard'
+    | '/entries'
+    | '/workers'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/api-docs'
+    | '/coupons'
+    | '/dashboard'
+    | '/entries'
+    | '/workers'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/_app/api-docs'
+    | '/_app/coupons'
+    | '/_app/dashboard'
+    | '/_app/entries'
+    | '/_app/workers'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +147,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/workers': {
+      id: '/_app/workers'
+      path: '/workers'
+      fullPath: '/workers'
+      preLoaderRoute: typeof AppWorkersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/entries': {
+      id: '/_app/entries'
+      path: '/entries'
+      fullPath: '/entries'
+      preLoaderRoute: typeof AppEntriesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/coupons': {
+      id: '/_app/coupons'
+      path: '/coupons'
+      fullPath: '/coupons'
+      preLoaderRoute: typeof AppCouponsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/api-docs': {
+      id: '/_app/api-docs'
+      path: '/api-docs'
+      fullPath: '/api-docs'
+      preLoaderRoute: typeof AppApiDocsRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppApiDocsRoute: typeof AppApiDocsRoute
+  AppCouponsRoute: typeof AppCouponsRoute
+  AppDashboardRoute: typeof AppDashboardRoute
+  AppEntriesRoute: typeof AppEntriesRoute
+  AppWorkersRoute: typeof AppWorkersRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppApiDocsRoute: AppApiDocsRoute,
+  AppCouponsRoute: AppCouponsRoute,
+  AppDashboardRoute: AppDashboardRoute,
+  AppEntriesRoute: AppEntriesRoute,
+  AppWorkersRoute: AppWorkersRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
