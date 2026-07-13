@@ -14,16 +14,156 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bonus_coupons: {
+        Row: {
+          awarded_at: string
+          id: string
+          streak_end_day: string
+          vehicle_reg: string
+        }
+        Insert: {
+          awarded_at?: string
+          id?: string
+          streak_end_day: string
+          vehicle_reg: string
+        }
+        Update: {
+          awarded_at?: string
+          id?: string
+          streak_end_day?: string
+          vehicle_reg?: string
+        }
+        Relationships: []
+      }
+      coupons: {
+        Row: {
+          awarded_at: string
+          day: string
+          entries_count: number
+          id: string
+          total_amount: number
+          vehicle_reg: string
+        }
+        Insert: {
+          awarded_at?: string
+          day: string
+          entries_count?: number
+          id?: string
+          total_amount: number
+          vehicle_reg: string
+        }
+        Update: {
+          awarded_at?: string
+          day?: string
+          entries_count?: number
+          id?: string
+          total_amount?: number
+          vehicle_reg?: string
+        }
+        Relationships: []
+      }
+      entries: {
+        Row: {
+          amount: number
+          created_at: string
+          driver_name: string
+          entry_day: string
+          id: string
+          mobile: string
+          photo_path: string | null
+          vehicle_reg: string
+          worker_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          driver_name: string
+          entry_day?: string
+          id?: string
+          mobile: string
+          photo_path?: string | null
+          vehicle_reg: string
+          worker_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          driver_name?: string
+          entry_day?: string
+          id?: string
+          mobile?: string
+          photo_path?: string | null
+          vehicle_reg?: string
+          worker_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "worker"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +290,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "worker"],
+    },
   },
 } as const
