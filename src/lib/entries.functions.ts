@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 
 export type EntryDTO = {
   id: string;
@@ -16,7 +16,7 @@ export type EntryDTO = {
 };
 
 export const listEntries = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async ({ context }): Promise<EntryDTO[]> => {
     const { data: entries, error } = await context.supabase
       .from("entries")

@@ -17,7 +17,7 @@ export type BonusCouponDTO = {
 };
 
 export const listCoupons = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async ({ context }): Promise<CouponDTO[]> => {
     const { data, error } = await context.supabase
       .from("coupons")
@@ -29,7 +29,7 @@ export const listCoupons = createServerFn({ method: "GET" })
   });
 
 export const listBonusCoupons = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async ({ context }): Promise<BonusCouponDTO[]> => {
     const { data, error } = await context.supabase
       .from("bonus_coupons")

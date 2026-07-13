@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 
 export type DashboardStats = {
   entriesToday: number;
@@ -25,7 +25,7 @@ function istDay(d: Date): string {
 }
 
 export const getDashboardStats = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async ({ context }): Promise<DashboardStats> => {
     const today = istDay(new Date());
     const days: string[] = [];
