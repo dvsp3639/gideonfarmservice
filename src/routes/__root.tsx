@@ -76,10 +76,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "Gideon Farm Services — Admin Dashboard" },
       {
         property: "og:description",
-        content: "Diesel promotional coupon program admin console.",
+        content: "Admin console for Gideon Farm Services petrol pump — manage workers, monitor autorickshaw diesel entries, and track coupon rewards.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Gideon Farm Services — Admin Dashboard" },
+      { name: "twitter:description", content: "Admin console for Gideon Farm Services petrol pump — manage workers, monitor autorickshaw diesel entries, and track coupon rewards." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/2ab40e2f-8436-4657-a0b9-9f124c50f004/id-preview-e95489a0--eaf989e4-6791-4d04-858f-c459527801e9.lovable.app-1783945505962.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/2ab40e2f-8436-4657-a0b9-9f124c50f004/id-preview-e95489a0--eaf989e4-6791-4d04-858f-c459527801e9.lovable.app-1783945505962.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
