@@ -4,12 +4,26 @@ import { useQueryClient } from "@tanstack/react-query";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { supabase } from "@/integrations/supabase/client";
+import { getMyProfile } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/_app")({
   ssr: false,
   beforeLoad: async () => {
     const { data } = await supabase.auth.getSession();
     if (!data.session) throw redirect({ to: "/login" });
+    // Enforce admin-only access to the dashboard shell
+    try {
+      const profile = await getMyProfile();
+      if (!profile.isAdmin) {
+        await supabase.auth.signOut();
+        throw redirect({ to: "/login" });
+      }
+    } catch (err) {
+      // Rethrow router redirects; otherwise treat as unauthorized
+      if (err && typeof err === "object" && "to" in (err as any)) throw err;
+      await supabase.auth.signOut();
+      throw redirect({ to: "/login" });
+    }
   },
   component: AppLayout,
 });
