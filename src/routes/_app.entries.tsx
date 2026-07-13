@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { Search } from "lucide-react";
 import { mockEntries } from "@/lib/mock-data";
+import { fmtDateTime } from "@/lib/format";
 
 export const Route = createFileRoute("/_app/entries")({
   component: EntriesPage,
@@ -94,7 +95,7 @@ function EntriesPage() {
                   </TableCell>
                   <TableCell className="text-muted-foreground">{e.workerUsername}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {new Date(e.createdAt).toLocaleString("en-IN")}
+                    {fmtDateTime(e.createdAt)}
                   </TableCell>
                 </TableRow>
               ))}

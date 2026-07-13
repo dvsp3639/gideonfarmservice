@@ -123,7 +123,7 @@ export function last7Days(entries: Entry[]) {
     const grouped = groupByDayVehicle(dayEntries).filter((g) => g.total >= 500);
     days.push({
       date: iso,
-      label: d.toLocaleDateString("en-IN", { weekday: "short" }),
+      label: new Date(iso + "T00:00:00Z").toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short" }),
       entries: dayEntries.length,
       amount: dayEntries.reduce((s, e) => s + e.amount, 0),
       coupons: grouped.length,
