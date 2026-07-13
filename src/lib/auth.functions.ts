@@ -26,27 +26,7 @@ export const getMyProfile = createServerFn({ method: "GET" })
     };
   });
 
-/**
- * If no admin exists yet, grant admin role to the currently signed-in user.
- * Idempotent no-op once an admin exists.
- */
-export const bootstrapFirstAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { count, error: countErr } = await supabaseAdmin
-      .from("user_roles")
-      .select("*", { count: "exact", head: true })
-      .eq("role", "admin");
-    if (countErr) throw new Error(countErr.message);
-    if ((count ?? 0) > 0) return { granted: false };
-
-    const { error } = await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: context.userId, role: "admin" });
-    if (error) throw new Error(error.message);
-    return { granted: true };
-  });
+export const ADMIN_EMAIL = "admin@workers.gideon.local";
 
 export const hasAnyAdmin = createServerFn({ method: "GET" }).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -56,4 +36,45 @@ export const hasAnyAdmin = createServerFn({ method: "GET" }).handler(async () =>
     .eq("role", "admin");
   if (error) throw new Error(error.message);
   return { exists: (count ?? 0) > 0 };
+});
+
+/**
+ * First-run only: create the built-in admin user (username=admin) with a
+ * randomly generated password and return it once for the user to save.
+ * Fails if any admin already exists.
+ */
+export const provisionAdmin = createServerFn({ method: "POST" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const { count, error: countErr } = await supabaseAdmin
+    .from("user_roles")
+    .select("*", { count: "exact", head: true })
+    .eq("role", "admin");
+  if (countErr) throw new Error(countErr.message);
+  if ((count ?? 0) > 0) throw new Error("Admin already exists");
+
+  // Cryptographically random, human-readable password
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  const password = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+
+  const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+    email: ADMIN_EMAIL,
+    password,
+    email_confirm: true,
+    user_metadata: { username: "admin", display_name: "Admin" },
+  });
+  if (createErr || !created.user) throw new Error(createErr?.message ?? "Failed to create admin");
+
+  await supabaseAdmin.from("profiles").upsert(
+    { id: created.user.id, username: "admin", display_name: "Admin", active: true },
+    { onConflict: "id" },
+  );
+
+  const { error: roleErr } = await supabaseAdmin
+    .from("user_roles")
+    .insert({ user_id: created.user.id, role: "admin" });
+  if (roleErr) throw new Error(roleErr.message);
+
+  return { password };
 });
