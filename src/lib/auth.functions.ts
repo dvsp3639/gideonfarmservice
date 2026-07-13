@@ -39,42 +39,46 @@ export const hasAnyAdmin = createServerFn({ method: "GET" }).handler(async () =>
 });
 
 /**
- * First-run only: create the built-in admin user (username=admin) with a
- * randomly generated password and return it once for the user to save.
- * Fails if any admin already exists.
+ * Idempotently ensure the built-in admin (username=admin) exists with the
+ * fixed password. Safe to run repeatedly — creates the user + role on first
+ * run and resets the password on subsequent runs.
  */
-export const provisionAdmin = createServerFn({ method: "POST" }).handler(async () => {
+export const ensureAdminCredentials = createServerFn({ method: "POST" }).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const password = "Sandeep@123";
 
-  const { count, error: countErr } = await supabaseAdmin
-    .from("user_roles")
-    .select("*", { count: "exact", head: true })
-    .eq("role", "admin");
-  if (countErr) throw new Error(countErr.message);
-  if ((count ?? 0) > 0) throw new Error("Admin already exists");
-
-  // Cryptographically random, human-readable password
-  const bytes = new Uint8Array(12);
-  crypto.getRandomValues(bytes);
-  const password = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-
-  const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-    email: ADMIN_EMAIL,
-    password,
-    email_confirm: true,
-    user_metadata: { username: "admin", display_name: "Admin" },
+  // Look up any existing user by synthetic email
+  const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
+    page: 1,
+    perPage: 200,
   });
-  if (createErr || !created.user) throw new Error(createErr?.message ?? "Failed to create admin");
+  if (listErr) throw new Error(listErr.message);
+  const existing = list.users.find((u) => u.email === ADMIN_EMAIL);
+
+  let userId: string;
+  if (existing) {
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(existing.id, { password });
+    if (error) throw new Error(error.message);
+    userId = existing.id;
+  } else {
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email: ADMIN_EMAIL,
+      password,
+      email_confirm: true,
+      user_metadata: { username: "admin", display_name: "Admin" },
+    });
+    if (error || !created.user) throw new Error(error?.message ?? "Failed to create admin");
+    userId = created.user.id;
+  }
 
   await supabaseAdmin.from("profiles").upsert(
-    { id: created.user.id, username: "admin", display_name: "Admin", active: true },
+    { id: userId, username: "admin", display_name: "Admin", active: true },
     { onConflict: "id" },
   );
+  await supabaseAdmin.from("user_roles").upsert(
+    { user_id: userId, role: "admin" },
+    { onConflict: "user_id,role" },
+  );
 
-  const { error: roleErr } = await supabaseAdmin
-    .from("user_roles")
-    .insert({ user_id: created.user.id, role: "admin" });
-  if (roleErr) throw new Error(roleErr.message);
-
-  return { password };
+  return { ok: true, username: "admin" };
 });
