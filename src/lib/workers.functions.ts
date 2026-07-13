@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 
 export type WorkerDTO = {
   id: string;
@@ -23,7 +23,7 @@ function workerEmail(username: string) {
 }
 
 export const listWorkers = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async ({ context }): Promise<WorkerDTO[]> => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -46,7 +46,7 @@ export const listWorkers = createServerFn({ method: "GET" })
   });
 
 export const createWorker = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator((data) =>
     z
       .object({
@@ -95,7 +95,7 @@ export const createWorker = createServerFn({ method: "POST" })
   });
 
 export const updateWorker = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator((data) =>
     z
       .object({
@@ -116,7 +116,7 @@ export const updateWorker = createServerFn({ method: "POST" })
   });
 
 export const resetWorkerPassword = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator((data) => z.object({ id: z.string().uuid(), password: z.string().min(6).max(72) }).parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
@@ -127,7 +127,7 @@ export const resetWorkerPassword = createServerFn({ method: "POST" })
   });
 
 export const deleteWorker = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator((data) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
