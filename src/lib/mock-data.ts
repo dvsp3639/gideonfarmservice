@@ -20,11 +20,13 @@ export type Entry = {
   createdAt: string; // ISO
 };
 
+// Deterministic "now" so SSR and client render the same strings.
 const now = new Date();
-function daysAgo(d: number, h = 10) {
+now.setHours(12, 0, 0, 0);
+function daysAgo(d: number, h = 10, m = 0) {
   const x = new Date(now);
   x.setDate(x.getDate() - d);
-  x.setHours(h, Math.floor(Math.random() * 60), 0, 0);
+  x.setHours(h, m, 0, 0);
   return x.toISOString();
 }
 
