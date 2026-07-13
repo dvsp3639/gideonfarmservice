@@ -1,12 +1,15 @@
 import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_app")({
-  beforeLoad: () => {
-    if (typeof window !== "undefined" && !localStorage.getItem("gideon_auth_v1")) {
-      throw redirect({ to: "/login" });
-    }
+  ssr: false,
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) throw redirect({ to: "/login" });
   },
   component: AppLayout,
 });
@@ -22,6 +25,16 @@ const titles: Record<string, { title: string; subtitle: string }> = {
 function AppLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const meta = titles[pathname] ?? { title: "Gideon Farm", subtitle: "" };
+  const qc = useQueryClient();
+
+  // Refresh queries after auth events (sign-in from another tab, token refresh)
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") return;
+      if (event === "SIGNED_IN" || event === "USER_UPDATED") qc.invalidateQueries();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [qc]);
 
   return (
     <SidebarProvider>

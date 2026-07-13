@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -35,10 +35,12 @@ import {
   TrendingUp,
   Truck,
 } from "lucide-react";
-import { mockEntries, computeCoupons, last7Days } from "@/lib/mock-data";
+import { dashboardStatsQuery, entriesQuery } from "@/lib/queries";
 import { fmtDateTime } from "@/lib/format";
+import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
 
 export const Route = createFileRoute("/_app/dashboard")({
+  ssr: false,
   component: DashboardPage,
 });
 
@@ -82,20 +84,15 @@ function StatCard({
 }
 
 function DashboardPage() {
-  const today = new Date().toISOString().slice(0, 10);
-  const todaysEntries = useMemo(
-    () => mockEntries.filter((e) => e.createdAt.slice(0, 10) === today),
-    [today],
-  );
-  const week = useMemo(() => last7Days(mockEntries), []);
-  const totals = useMemo(() => computeCoupons(mockEntries), []);
-  const todayCoupons = useMemo(() => computeCoupons(todaysEntries).coupons, [todaysEntries]);
-  const weekAmount = week.reduce((s, d) => s + d.amount, 0);
-  const weekCoupons = week.reduce((s, d) => s + d.coupons, 0);
+  useRealtimeInvalidate("entries", [dashboardStatsQuery.queryKey, entriesQuery.queryKey]);
+  useRealtimeInvalidate("coupons", [dashboardStatsQuery.queryKey]);
+  useRealtimeInvalidate("bonus_coupons", [dashboardStatsQuery.queryKey]);
 
-  const recent = [...mockEntries]
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
-    .slice(0, 6);
+  const stats = useQuery(dashboardStatsQuery);
+  const entries = useQuery(entriesQuery);
+
+  const week = stats.data?.weekly ?? [];
+  const recent = (entries.data ?? []).slice(0, 6);
 
   return (
     <div className="space-y-6">
@@ -103,28 +100,28 @@ function DashboardPage() {
         <StatCard
           icon={Droplet}
           label="Entries today"
-          value={String(todaysEntries.length)}
+          value={String(stats.data?.entriesToday ?? "—")}
           hint="Today"
           tone="primary"
         />
         <StatCard
           icon={IndianRupee}
           label="Sales this week"
-          value={`₹${weekAmount.toLocaleString("en-IN")}`}
+          value={stats.data ? `₹${stats.data.salesWeek.toLocaleString("en-IN")}` : "—"}
           hint="7 days"
           tone="warning"
         />
         <StatCard
           icon={Ticket}
           label="Coupons awarded (week)"
-          value={String(weekCoupons)}
-          hint={`${todayCoupons} today`}
+          value={String(stats.data?.couponsWeek ?? "—")}
+          hint={stats.data ? `${stats.data.couponsToday} today` : ""}
           tone="success"
         />
         <StatCard
           icon={Star}
           label="Bonus coupons (all-time)"
-          value={String(totals.bonus)}
+          value={String(stats.data?.bonusAllTime ?? "—")}
           hint="7-day streaks"
           tone="primary"
         />
@@ -213,7 +210,6 @@ function DashboardPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Photo</TableHead>
                 <TableHead>Driver</TableHead>
                 <TableHead>Vehicle</TableHead>
                 <TableHead>Amount</TableHead>
@@ -224,26 +220,26 @@ function DashboardPage() {
             <TableBody>
               {recent.map((e) => (
                 <TableRow key={e.id}>
-                  <TableCell>
-                    <img
-                      src={e.photoUrl}
-                      alt={e.vehicleReg}
-                      className="h-10 w-14 rounded-md object-cover"
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">{e.driverName}</TableCell>
-                  <TableCell className="font-mono text-xs">{e.vehicleReg}</TableCell>
+                  <TableCell className="font-medium">{e.driver_name}</TableCell>
+                  <TableCell className="font-mono text-xs">{e.vehicle_reg}</TableCell>
                   <TableCell>
                     <Badge variant={e.amount >= 500 ? "default" : "secondary"}>
                       ₹{e.amount}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{e.workerUsername}</TableCell>
+                  <TableCell className="text-muted-foreground">{e.worker_username}</TableCell>
                   <TableCell className="text-muted-foreground text-xs">
-                    {fmtDateTime(e.createdAt)}
+                    {fmtDateTime(e.created_at)}
                   </TableCell>
                 </TableRow>
               ))}
+              {recent.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                    {entries.isLoading ? "Loading…" : "No entries yet. Workers can start logging via the Android app."}
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

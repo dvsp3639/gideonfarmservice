@@ -1,5 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { LayoutDashboard, ListChecks, Users, Ticket, Code2, Fuel, LogOut } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Sidebar,
   SidebarContent,
@@ -12,7 +13,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { logout, getSession } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
+import { myProfileQuery } from "@/lib/queries";
 import { toast } from "sonner";
 
 const items = [
@@ -26,7 +28,11 @@ const items = [
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
-  const session = getSession();
+  const { data: me } = useQuery(myProfileQuery);
+
+  const label = me?.display_name || me?.username || "admin";
+  const initial = label.charAt(0).toUpperCase();
+  const roleLabel = me?.isAdmin ? "Admin" : me?.isWorker ? "Worker" : "Member";
 
   return (
     <Sidebar collapsible="icon">
@@ -68,15 +74,15 @@ export function AppSidebar() {
       <SidebarFooter>
         <div className="flex items-center gap-2 rounded-md bg-sidebar-accent/60 p-2 group-data-[collapsible=icon]:hidden">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-semibold text-primary">
-            {session?.username?.[0]?.toUpperCase() ?? "A"}
+            {initial}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-medium">{session?.username ?? "admin"}</div>
-            <div className="truncate text-[11px] text-muted-foreground">Owner</div>
+            <div className="truncate text-sm font-medium">{label}</div>
+            <div className="truncate text-[11px] text-muted-foreground">{roleLabel}</div>
           </div>
           <button
-            onClick={() => {
-              logout();
+            onClick={async () => {
+              await supabase.auth.signOut();
               toast.success("Signed out");
               navigate({ to: "/login" });
             }}
