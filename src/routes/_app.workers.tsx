@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,21 +25,72 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, KeyRound } from "lucide-react";
-import { mockWorkers, type Worker } from "@/lib/mock-data";
+import { workersQuery } from "@/lib/queries";
+import type { WorkerDTO } from "@/lib/workers.functions";
+import {
+  createWorker,
+  updateWorker,
+  deleteWorker,
+  resetWorkerPassword,
+} from "@/lib/workers.functions";
 import { fmtDate } from "@/lib/format";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/workers")({
+  ssr: false,
   component: WorkersPage,
 });
 
-type FormState = { username: string; fullName: string; phone: string; password: string; active: boolean };
-const empty: FormState = { username: "", fullName: "", phone: "", password: "", active: true };
+type FormState = { username: string; display_name: string; phone: string; password: string; active: boolean };
+const empty: FormState = { username: "", display_name: "", phone: "", password: "", active: true };
 
 function WorkersPage() {
-  const [workers, setWorkers] = useState<Worker[]>(mockWorkers);
+  const qc = useQueryClient();
+  const { data: workers = [], isLoading } = useQuery(workersQuery);
+
+  const createFn = useServerFn(createWorker);
+  const updateFn = useServerFn(updateWorker);
+  const deleteFn = useServerFn(deleteWorker);
+  const resetFn = useServerFn(resetWorkerPassword);
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: workersQuery.queryKey });
+
+  const createMut = useMutation({
+    mutationFn: (data: { username: string; display_name: string; phone: string; password: string }) =>
+      createFn({ data }),
+    onSuccess: () => {
+      toast.success("Worker created");
+      invalidate();
+      setOpen(false);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed to create worker"),
+  });
+  const updateMut = useMutation({
+    mutationFn: (data: { id: string; display_name?: string; phone?: string; active?: boolean }) =>
+      updateFn({ data }),
+    onSuccess: () => {
+      toast.success("Worker updated");
+      invalidate();
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+  });
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => deleteFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Worker deleted");
+      invalidate();
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+  });
+  const resetMut = useMutation({
+    mutationFn: (v: { id: string; password: string }) => resetFn({ data: v }),
+    onSuccess: (_r, v) =>
+      toast.success(`New password set: ${v.password}`, { duration: 10000 }),
+    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+  });
+
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Worker | null>(null);
+  const [editing, setEditing] = useState<WorkerDTO | null>(null);
   const [form, setForm] = useState<FormState>(empty);
 
   function openCreate() {
@@ -45,56 +98,49 @@ function WorkersPage() {
     setForm(empty);
     setOpen(true);
   }
-  function openEdit(w: Worker) {
+  function openEdit(w: WorkerDTO) {
     setEditing(w);
-    setForm({ username: w.username, fullName: w.fullName, phone: w.phone, password: "", active: w.active });
+    setForm({
+      username: w.username,
+      display_name: w.display_name ?? "",
+      phone: w.phone ?? "",
+      password: "",
+      active: w.active,
+    });
     setOpen(true);
   }
   function save() {
-    if (!form.username || !form.fullName || !form.phone) {
-      toast.error("Please fill all required fields");
+    if (editing) {
+      updateMut.mutate({
+        id: editing.id,
+        display_name: form.display_name,
+        phone: form.phone,
+        active: form.active,
+      });
+      setOpen(false);
       return;
     }
-    if (editing) {
-      setWorkers((ws) =>
-        ws.map((w) =>
-          w.id === editing.id
-            ? { ...w, username: form.username, fullName: form.fullName, phone: form.phone, active: form.active }
-            : w,
-        ),
-      );
-      toast.success("Worker updated");
-    } else {
-      if (!form.password) {
-        toast.error("Password required for new worker");
-        return;
-      }
-      setWorkers((ws) => [
-        {
-          id: crypto.randomUUID(),
-          username: form.username,
-          fullName: form.fullName,
-          phone: form.phone,
-          active: form.active,
-          createdAt: new Date().toISOString(),
-        },
-        ...ws,
-      ]);
-      toast.success("Worker created — credentials issued");
+    if (!form.username || !form.display_name || !form.phone || !form.password) {
+      toast.error("Please fill all required fields (min 6 char password)");
+      return;
     }
-    setOpen(false);
+    createMut.mutate({
+      username: form.username,
+      display_name: form.display_name,
+      phone: form.phone,
+      password: form.password,
+    });
   }
-  function remove(w: Worker) {
-    if (!confirm(`Delete worker "${w.username}"?`)) return;
-    setWorkers((ws) => ws.filter((x) => x.id !== w.id));
-    toast.success("Worker deleted");
+  function remove(w: WorkerDTO) {
+    if (!confirm(`Delete worker "${w.username}"? This removes their account permanently.`)) return;
+    deleteMut.mutate(w.id);
   }
-  function resetPassword(w: Worker) {
+  function resetPassword(w: WorkerDTO) {
     const newPass = Math.random().toString(36).slice(2, 10);
-    toast.success(`New password for ${w.username}: ${newPass}`, { duration: 8000 });
+    resetMut.mutate({ id: w.id, password: newPass });
   }
-  function toggleActive(w: Worker) {
-    setWorkers((ws) => ws.map((x) => (x.id === w.id ? { ...x, active: !x.active } : x)));
+  function toggleActive(w: WorkerDTO) {
+    updateMut.mutate({ id: w.id, active: !w.active });
   }
 
   return (
@@ -125,7 +171,7 @@ function WorkersPage() {
               {workers.map((w) => (
                 <TableRow key={w.id}>
                   <TableCell className="font-mono text-xs">{w.username}</TableCell>
-                  <TableCell className="font-medium">{w.fullName}</TableCell>
+                  <TableCell className="font-medium">{w.display_name}</TableCell>
                   <TableCell className="text-muted-foreground">{w.phone}</TableCell>
                   <TableCell>
                     <button onClick={() => toggleActive(w)}>
@@ -135,7 +181,7 @@ function WorkersPage() {
                     </button>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {fmtDate(w.createdAt)}
+                    {fmtDate(w.created_at)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
@@ -152,6 +198,13 @@ function WorkersPage() {
                   </TableCell>
                 </TableRow>
               ))}
+              {workers.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                    {isLoading ? "Loading workers…" : "No workers yet. Click “New worker” to create one."}
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -168,11 +221,22 @@ function WorkersPage() {
           <div className="grid gap-3 py-2">
             <div className="space-y-1.5">
               <Label>Username</Label>
-              <Input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="e.g. ravi.k" />
+              <Input
+                value={form.username}
+                onChange={(e) => setForm({ ...form, username: e.target.value })}
+                placeholder="e.g. ravi.k"
+                disabled={!!editing}
+              />
+              {!editing && (
+                <p className="text-[11px] text-muted-foreground">
+                  Sign-in email will be{" "}
+                  <span className="font-mono">{(form.username || "username")}@workers.gideon.local</span>
+                </p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Full name</Label>
-              <Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
+              <Input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} />
             </div>
             <div className="space-y-1.5">
               <Label>Phone</Label>
@@ -180,7 +244,7 @@ function WorkersPage() {
             </div>
             {!editing && (
               <div className="space-y-1.5">
-                <Label>Password</Label>
+                <Label>Password (min 6)</Label>
                 <Input type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
               </div>
             )}
@@ -194,7 +258,9 @@ function WorkersPage() {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={save}>{editing ? "Save changes" : "Create worker"}</Button>
+            <Button onClick={save} disabled={createMut.isPending || updateMut.isPending}>
+              {editing ? "Save changes" : createMut.isPending ? "Creating…" : "Create worker"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

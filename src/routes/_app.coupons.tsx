@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,19 +11,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Ticket, Star } from "lucide-react";
-import { mockEntries, computeCoupons } from "@/lib/mock-data";
+import { couponsQuery, bonusCouponsQuery } from "@/lib/queries";
+import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
 
 export const Route = createFileRoute("/_app/coupons")({
+  ssr: false,
   component: CouponsPage,
 });
 
 function CouponsPage() {
-  const { coupons, bonus, couponRows, bonusDetails } = useMemo(
-    () => computeCoupons(mockEntries),
-    [],
-  );
+  useRealtimeInvalidate("coupons", [couponsQuery.queryKey]);
+  useRealtimeInvalidate("bonus_coupons", [bonusCouponsQuery.queryKey]);
 
-  const rows = [...couponRows].sort((a, b) => (a.day < b.day ? 1 : -1));
+  const coupons = useQuery(couponsQuery);
+  const bonuses = useQuery(bonusCouponsQuery);
+
+  const rows = coupons.data ?? [];
+  const bonusRows = bonuses.data ?? [];
 
   return (
     <div className="space-y-4">
@@ -36,7 +40,7 @@ function CouponsPage() {
               </div>
               <div>
                 <div className="text-xs text-muted-foreground">Total coupons awarded</div>
-                <div className="text-2xl font-bold">{coupons}</div>
+                <div className="text-2xl font-bold">{rows.length}</div>
               </div>
             </div>
             <p className="mt-3 text-xs text-muted-foreground">
@@ -52,7 +56,7 @@ function CouponsPage() {
               </div>
               <div>
                 <div className="text-xs text-muted-foreground">Bonus coupons (7-day streaks)</div>
-                <div className="text-2xl font-bold">{bonus}</div>
+                <div className="text-2xl font-bold">{bonusRows.length}</div>
               </div>
             </div>
             <p className="mt-3 text-xs text-muted-foreground">
@@ -80,11 +84,11 @@ function CouponsPage() {
             </TableHeader>
             <TableBody>
               {rows.map((r) => (
-                <TableRow key={`${r.day}-${r.vehicleReg}`}>
+                <TableRow key={r.id}>
                   <TableCell className="text-xs text-muted-foreground">{r.day}</TableCell>
-                  <TableCell className="font-mono text-xs">{r.vehicleReg}</TableCell>
-                  <TableCell>{r.count}</TableCell>
-                  <TableCell>₹{r.total.toLocaleString("en-IN")}</TableCell>
+                  <TableCell className="font-mono text-xs">{r.vehicle_reg}</TableCell>
+                  <TableCell>{r.entries_count}</TableCell>
+                  <TableCell>₹{r.total_amount.toLocaleString("en-IN")}</TableCell>
                   <TableCell>
                     <Badge>Coupon awarded</Badge>
                   </TableCell>
@@ -93,7 +97,7 @@ function CouponsPage() {
               {rows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
-                    No coupons awarded yet.
+                    {coupons.isLoading ? "Loading…" : "No coupons awarded yet."}
                   </TableCell>
                 </TableRow>
               )}
@@ -119,19 +123,19 @@ function CouponsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {bonusDetails.map((b, i) => (
-                <TableRow key={i}>
-                  <TableCell className="text-xs text-muted-foreground">{b.awardedOn}</TableCell>
-                  <TableCell className="font-mono text-xs">{b.vehicleReg}</TableCell>
+              {bonusRows.map((b) => (
+                <TableRow key={b.id}>
+                  <TableCell className="text-xs text-muted-foreground">{b.streak_end_day}</TableCell>
+                  <TableCell className="font-mono text-xs">{b.vehicle_reg}</TableCell>
                   <TableCell>
                     <Badge className="bg-accent text-accent-foreground">Bonus coupon</Badge>
                   </TableCell>
                 </TableRow>
               ))}
-              {bonusDetails.length === 0 && (
+              {bonusRows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={3} className="py-10 text-center text-muted-foreground">
-                    No bonus coupons yet.
+                    {bonuses.isLoading ? "Loading…" : "No bonus coupons yet."}
                   </TableCell>
                 </TableRow>
               )}
