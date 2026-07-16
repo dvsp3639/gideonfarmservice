@@ -44,8 +44,8 @@ export const getDashboardStats = createServerFn({ method: "GET" })
         .limit(10000),
       context.supabase
         .from("coupons")
-        .select("day")
-        .gte("day", weekStart)
+        .select("issued_date")
+        .gte("issued_date", weekStart)
         .limit(10000),
       context.supabase.from("bonus_coupons").select("id", { count: "exact", head: true }),
     ]);
