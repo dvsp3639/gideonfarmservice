@@ -155,10 +155,9 @@ function WorkersPage() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
+            <TableRow>
                 <TableHead>Username</TableHead>
                 <TableHead>Full name</TableHead>
-                <TableHead>Phone</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -169,7 +168,6 @@ function WorkersPage() {
                 <TableRow key={w.id}>
                   <TableCell className="font-mono text-xs">{w.username}</TableCell>
                   <TableCell className="font-medium">{w.display_name}</TableCell>
-                  <TableCell className="text-muted-foreground">{w.phone}</TableCell>
                   <TableCell>
                     <button onClick={() => toggleActive(w)}>
                       <Badge variant={w.active ? "default" : "secondary"}>
@@ -197,7 +195,7 @@ function WorkersPage() {
               ))}
               {workers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
                     {isLoading ? "Loading workers…" : "No workers yet. Click “New worker” to create one."}
                   </TableCell>
                 </TableRow>
@@ -234,10 +232,6 @@ function WorkersPage() {
             <div className="space-y-1.5">
               <Label>Full name</Label>
               <Input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Phone</Label>
-              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+91…" />
             </div>
             {!editing && (
               <div className="space-y-1.5">
