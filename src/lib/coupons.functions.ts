@@ -21,11 +21,22 @@ export const listCoupons = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<CouponDTO[]> => {
     const { data, error } = await context.supabase
       .from("coupons")
-      .select("id, day, vehicle_reg, total_amount, entries_count, awarded_at")
-      .order("day", { ascending: false })
+      .select("id, issued_date, vehicle_registration, coupon_value, coupon_type")
+      .neq("coupon_type", "BONUS")
+      .order("issued_date", { ascending: false })
       .limit(1000);
     if (error) throw new Error(error.message);
-    return (data ?? []).map((c) => ({ ...c, total_amount: Number(c.total_amount) }));
+    return (data ?? []).map((c) => {
+      const iso = c.issued_date ?? "";
+      return {
+        id: c.id,
+        day: iso ? iso.slice(0, 10) : "",
+        vehicle_reg: c.vehicle_registration ?? "",
+        total_amount: Number(c.coupon_value ?? 0),
+        entries_count: 0,
+        awarded_at: iso,
+      };
+    });
   });
 
 export const listBonusCoupons = createServerFn({ method: "GET" })

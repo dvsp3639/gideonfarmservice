@@ -44,8 +44,8 @@ export const getDashboardStats = createServerFn({ method: "GET" })
         .limit(10000),
       context.supabase
         .from("coupons")
-        .select("day")
-        .gte("day", weekStart)
+        .select("issued_date")
+        .gte("issued_date", weekStart)
         .limit(10000),
       context.supabase.from("bonus_coupons").select("id", { count: "exact", head: true }),
     ]);
@@ -54,7 +54,9 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     if (bonusRes.error) throw new Error(bonusRes.error.message);
 
     const entries = entriesRes.data ?? [];
-    const coupons = couponsRes.data ?? [];
+    const coupons = (couponsRes.data ?? []).map((c) => ({
+      day: (c.issued_date ?? "").slice(0, 10),
+    }));
 
     const weekly = days.map((iso) => {
       const dayEntries = entries.filter((e) => e.entry_day === iso);
