@@ -41,8 +41,8 @@ export const Route = createFileRoute("/_app/workers")({
   component: WorkersPage,
 });
 
-type FormState = { username: string; display_name: string; phone: string; password: string; active: boolean };
-const empty: FormState = { username: "", display_name: "", phone: "", password: "", active: true };
+type FormState = { username: string; display_name: string; password: string; active: boolean };
+const empty: FormState = { username: "", display_name: "", password: "", active: true };
 
 function WorkersPage() {
   const qc = useQueryClient();
@@ -56,7 +56,7 @@ function WorkersPage() {
   const invalidate = () => qc.invalidateQueries({ queryKey: workersQuery.queryKey });
 
   const createMut = useMutation({
-    mutationFn: (data: { username: string; display_name: string; phone: string; password: string }) =>
+    mutationFn: (data: { username: string; display_name: string; password: string }) =>
       createFn({ data }),
     onSuccess: () => {
       toast.success("Worker created");
@@ -66,7 +66,7 @@ function WorkersPage() {
     onError: (e: any) => toast.error(e?.message ?? "Failed to create worker"),
   });
   const updateMut = useMutation({
-    mutationFn: (data: { id: string; display_name?: string; phone?: string; active?: boolean }) =>
+    mutationFn: (data: { id: string; display_name?: string; active?: boolean }) =>
       updateFn({ data }),
     onSuccess: () => {
       toast.success("Worker updated");
