@@ -8,7 +8,7 @@ export type EntryDTO = {
   mobile: string;
   amount: number;
   photo_path: string | null;
-  worker_id: string;
+  worker_id: string | null;
   worker_username: string;
   worker_display_name: string | null;
   entry_day: string;
@@ -26,16 +26,15 @@ export const listEntries = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     if (!entries || entries.length === 0) return [];
 
-    const workerIds = [...new Set(entries.map((e) => e.worker_id))];
-    const { data: profiles } = await context.supabase
-      .from("profiles")
-      .select("id, username, display_name")
-      .in("id", workerIds);
+    const workerIds = [...new Set(entries.map((e) => e.worker_id).filter((id): id is string => id !== null))];
+    const { data: profiles } = workerIds.length
+      ? await context.supabase.from("profiles").select("id, username, display_name").in("id", workerIds)
+      : { data: [] as { id: string; username: string; display_name: string | null }[] };
     const map = new Map(profiles?.map((p) => [p.id, p]) ?? []);
     return entries.map((e) => ({
       ...e,
       amount: Number(e.amount),
-      worker_username: map.get(e.worker_id)?.username ?? "unknown",
-      worker_display_name: map.get(e.worker_id)?.display_name ?? null,
+      worker_username: e.worker_id ? map.get(e.worker_id)?.username ?? "unknown" : "deleted",
+      worker_display_name: e.worker_id ? map.get(e.worker_id)?.display_name ?? null : null,
     }));
   });
