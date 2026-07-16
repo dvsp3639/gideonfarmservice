@@ -16,7 +16,6 @@ import { Route as AppWorkersRouteImport } from './routes/_app.workers'
 import { Route as AppEntriesRouteImport } from './routes/_app.entries'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCouponsRouteImport } from './routes/_app.coupons'
-import { Route as AppApiDocsRouteImport } from './routes/_app.api-docs'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -52,16 +51,10 @@ const AppCouponsRoute = AppCouponsRouteImport.update({
   path: '/coupons',
   getParentRoute: () => AppRoute,
 } as any)
-const AppApiDocsRoute = AppApiDocsRouteImport.update({
-  id: '/api-docs',
-  path: '/api-docs',
-  getParentRoute: () => AppRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/api-docs': typeof AppApiDocsRoute
   '/coupons': typeof AppCouponsRoute
   '/dashboard': typeof AppDashboardRoute
   '/entries': typeof AppEntriesRoute
@@ -70,7 +63,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/api-docs': typeof AppApiDocsRoute
   '/coupons': typeof AppCouponsRoute
   '/dashboard': typeof AppDashboardRoute
   '/entries': typeof AppEntriesRoute
@@ -81,7 +73,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
-  '/_app/api-docs': typeof AppApiDocsRoute
   '/_app/coupons': typeof AppCouponsRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/entries': typeof AppEntriesRoute
@@ -92,26 +83,17 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
-    | '/api-docs'
     | '/coupons'
     | '/dashboard'
     | '/entries'
     | '/workers'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/login'
-    | '/api-docs'
-    | '/coupons'
-    | '/dashboard'
-    | '/entries'
-    | '/workers'
+  to: '/' | '/login' | '/coupons' | '/dashboard' | '/entries' | '/workers'
   id:
     | '__root__'
     | '/'
     | '/_app'
     | '/login'
-    | '/_app/api-docs'
     | '/_app/coupons'
     | '/_app/dashboard'
     | '/_app/entries'
@@ -175,18 +157,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCouponsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/api-docs': {
-      id: '/_app/api-docs'
-      path: '/api-docs'
-      fullPath: '/api-docs'
-      preLoaderRoute: typeof AppApiDocsRouteImport
-      parentRoute: typeof AppRoute
-    }
   }
 }
 
 interface AppRouteChildren {
-  AppApiDocsRoute: typeof AppApiDocsRoute
   AppCouponsRoute: typeof AppCouponsRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppEntriesRoute: typeof AppEntriesRoute
@@ -194,7 +168,6 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppApiDocsRoute: AppApiDocsRoute,
   AppCouponsRoute: AppCouponsRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppEntriesRoute: AppEntriesRoute,

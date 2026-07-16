@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, ListChecks, Users, Ticket, Code2, Fuel, LogOut } from "lucide-react";
+import { LayoutDashboard, ListChecks, Users, Ticket, Fuel, LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Sidebar,
@@ -22,7 +22,6 @@ const items = [
   { title: "Entries", url: "/entries", icon: ListChecks },
   { title: "Workers", url: "/workers", icon: Users },
   { title: "Coupons", url: "/coupons", icon: Ticket },
-  { title: "API Docs", url: "/api-docs", icon: Code2 },
 ] as const;
 
 export function AppSidebar() {
