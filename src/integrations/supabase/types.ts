@@ -35,36 +35,147 @@ export type Database = {
         }
         Relationships: []
       }
-      coupons: {
+      coupon_entries: {
         Row: {
-          awarded_at: string
-          day: string
-          entries_count: number
-          id: string
-          total_amount: number
-          vehicle_reg: string
+          amount: number
+          coupon_id: string
+          entry_id: string
         }
         Insert: {
-          awarded_at?: string
-          day: string
-          entries_count?: number
-          id?: string
-          total_amount: number
-          vehicle_reg: string
+          amount: number
+          coupon_id: string
+          entry_id: string
         }
         Update: {
-          awarded_at?: string
-          day?: string
-          entries_count?: number
+          amount?: number
+          coupon_id?: string
+          entry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_entries_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_entries_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupons: {
+        Row: {
+          coupon_number: string
+          coupon_type: string
+          coupon_value: number
+          customer_name: string
+          expiry_date: string | null
+          fuel_entry_id: string | null
+          id: string
+          issued_date: string | null
+          mobile: string
+          printed: boolean | null
+          redeemed: boolean | null
+          redeemed_date: string | null
+          vehicle_registration: string
+        }
+        Insert: {
+          coupon_number: string
+          coupon_type: string
+          coupon_value: number
+          customer_name: string
+          expiry_date?: string | null
+          fuel_entry_id?: string | null
           id?: string
-          total_amount?: number
-          vehicle_reg?: string
+          issued_date?: string | null
+          mobile: string
+          printed?: boolean | null
+          redeemed?: boolean | null
+          redeemed_date?: string | null
+          vehicle_registration: string
+        }
+        Update: {
+          coupon_number?: string
+          coupon_type?: string
+          coupon_value?: number
+          customer_name?: string
+          expiry_date?: string | null
+          fuel_entry_id?: string | null
+          id?: string
+          issued_date?: string | null
+          mobile?: string
+          printed?: boolean | null
+          redeemed?: boolean | null
+          redeemed_date?: string | null
+          vehicle_registration?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupons_fuel_entry_id_fkey"
+            columns: ["fuel_entry_id"]
+            isOneToOne: false
+            referencedRelation: "entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_streak: {
+        Row: {
+          current_streak: number | null
+          last_visit: string | null
+          longest_streak: number | null
+          mobile: string
+        }
+        Insert: {
+          current_streak?: number | null
+          last_visit?: string | null
+          longest_streak?: number | null
+          mobile: string
+        }
+        Update: {
+          current_streak?: number | null
+          last_visit?: string | null
+          longest_streak?: number | null
+          mobile?: string
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          created_at: string | null
+          customer_name: string
+          id: string
+          mobile: string
+          updated_at: string | null
+          vehicle_registration: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_name: string
+          id?: string
+          mobile: string
+          updated_at?: string | null
+          vehicle_registration: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_name?: string
+          id?: string
+          mobile?: string
+          updated_at?: string | null
+          vehicle_registration?: string
         }
         Relationships: []
       }
       entries: {
         Row: {
           amount: number
+          coupon_generated: boolean | null
           created_at: string
           driver_name: string
           entry_day: string
@@ -76,6 +187,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          coupon_generated?: boolean | null
           created_at?: string
           driver_name: string
           entry_day?: string
@@ -87,6 +199,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          coupon_generated?: boolean | null
           created_at?: string
           driver_name?: string
           entry_day?: string
@@ -154,12 +267,40 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      find_customer: {
+        Args: { p_mobile: string }
+        Returns: {
+          customer_name: string
+          id: string
+          vehicle_registration: string
+        }[]
+      }
+      find_driver: {
+        Args: { p_mobile: string }
+        Returns: {
+          driver_name: string
+          vehicle_reg: string
+        }[]
+      }
+      generate_coupon_number: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      process_coupon: { Args: { p_vehicle_reg: string }; Returns: Json }
+      submit_entry: {
+        Args: {
+          p_amount: number
+          p_driver_name: string
+          p_mobile: string
+          p_photo_path: string
+          p_vehicle_reg: string
+          p_worker_id: string
+        }
+        Returns: Json
       }
     }
     Enums: {
