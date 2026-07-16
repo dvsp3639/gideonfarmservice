@@ -183,7 +183,7 @@ export type Database = {
           mobile: string
           photo_path: string | null
           vehicle_reg: string
-          worker_id: string
+          worker_id: string | null
         }
         Insert: {
           amount: number
@@ -195,7 +195,7 @@ export type Database = {
           mobile: string
           photo_path?: string | null
           vehicle_reg: string
-          worker_id: string
+          worker_id?: string | null
         }
         Update: {
           amount?: number
@@ -207,7 +207,7 @@ export type Database = {
           mobile?: string
           photo_path?: string | null
           vehicle_reg?: string
-          worker_id?: string
+          worker_id?: string | null
         }
         Relationships: []
       }
