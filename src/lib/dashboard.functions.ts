@@ -54,7 +54,9 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     if (bonusRes.error) throw new Error(bonusRes.error.message);
 
     const entries = entriesRes.data ?? [];
-    const coupons = couponsRes.data ?? [];
+    const coupons = (couponsRes.data ?? []).map((c) => ({
+      day: (c.issued_date ?? "").slice(0, 10),
+    }));
 
     const weekly = days.map((iso) => {
       const dayEntries = entries.filter((e) => e.entry_day === iso);
