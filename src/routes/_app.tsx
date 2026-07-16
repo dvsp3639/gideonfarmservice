@@ -33,7 +33,6 @@ const titles: Record<string, { title: string; subtitle: string }> = {
   "/entries": { title: "Entries", subtitle: "All autorickshaw diesel purchases" },
   "/workers": { title: "Workers", subtitle: "Manage Android app users" },
   "/coupons": { title: "Coupons", subtitle: "Rewards awarded to drivers" },
-  "/api-docs": { title: "API Docs", subtitle: "Endpoints for your Android app" },
 };
 
 function AppLayout() {
