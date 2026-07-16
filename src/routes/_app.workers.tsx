@@ -103,7 +103,6 @@ function WorkersPage() {
     setForm({
       username: w.username,
       display_name: w.display_name ?? "",
-      phone: w.phone ?? "",
       password: "",
       active: w.active,
     });
@@ -114,20 +113,18 @@ function WorkersPage() {
       updateMut.mutate({
         id: editing.id,
         display_name: form.display_name,
-        phone: form.phone,
         active: form.active,
       });
       setOpen(false);
       return;
     }
-    if (!form.username || !form.display_name || !form.phone || !form.password) {
+    if (!form.username || !form.display_name || !form.password) {
       toast.error("Please fill all required fields (min 6 char password)");
       return;
     }
     createMut.mutate({
       username: form.username,
       display_name: form.display_name,
-      phone: form.phone,
       password: form.password,
     });
   }
